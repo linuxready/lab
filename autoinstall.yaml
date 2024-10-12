@@ -1,0 +1,39 @@
+#cloud-config
+autoinstall:
+  version: 1
+  identity:
+    hostname: ubuntu-autoinstall
+    username: yami
+    password: "$6$XI.7iq5e9psMuxWz$h8FXY/.PWtuojXVR4dPKVk3VqxaBAMomgEgFvEZMoEjZiQTjOPmLzwB9HSRTuADJe9z96oNCTqZq91qbpZAHQ1"  # Replace with a hashed password
+  user-data:
+    chpasswd:
+      expire: False
+  ssh:
+    install-server: yes
+  storage:
+    layout:
+      name: lvm
+  packages:
+    - code           # VSCode
+    - google-chrome-stable # Google Chrome
+    - nodejs         # Node.js
+  late-commands:
+    # Add the repository for Google Chrome and install it
+    - curtin in-target --target=/target -- /bin/bash -c "wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor > /etc/apt/trusted.gpg.d/google.gpg"
+    - curtin in-target --target=/target -- /bin/bash -c "sh -c 'echo \"deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main\" > /etc/apt/sources.list.d/google-chrome.list'"
+    - curtin in-target --target=/target -- /bin/bash -c "apt update"
+    - curtin in-target --target=/target -- /bin/bash -c "apt install -y google-chrome-stable"
+
+    # Install Visual Studio Code
+    - curtin in-target --target=/target -- /bin/bash -c "wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /etc/apt/trusted.gpg.d/microsoft.gpg"
+    - curtin in-target --target=/target -- /bin/bash -c "sh -c 'echo \"deb [arch=amd64] https://packages.microsoft.com/repos/code stable main\" > /etc/apt/sources.list.d/vscode.list'"
+    - curtin in-target --target=/target -- /bin/bash -c "apt update"
+    - curtin in-target --target=/target -- /bin/bash -c "apt install -y code"
+
+    # Install Node.js
+    - curtin in-target --target=/target -- /bin/bash -c "apt install -y nodejs"
+
+  # Disable auto-updates for this installation process
+  update:
+    package-update: false
+    package-upgrade: false
